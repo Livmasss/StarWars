@@ -88,6 +88,7 @@ namespace math13
         private int score = 0;
         private bool gameOver = false;
         private int deathTimer = 0;
+        private bool deathExplosionStarted = false;
         private int rocketCount = 2;
         private int explosionRadius = 50;
         private int cometSpawnRate = 3;
@@ -102,10 +103,6 @@ namespace math13
         private AnimatedGif explosionAnimation;
         private List<Image> explosionFrames;
         private List<int> explosionDelays;
-
-        private Image backgroundImage;
-        private int backgroundOffset = 0; // Смещение по вертикали
-        private const int BackgroundSpeed = 2;
 
         private Image rocketBoostImage;
         private Image explosionBoostImage;
@@ -138,23 +135,21 @@ namespace math13
 
         public MainForm()
         {
-            spaceshipImage = Image.FromFile("C:\\_coding\\progmath\\math13\\Images\\spaceship.png");
-            rocketImage = Image.FromFile("C:\\_coding\\progmath\\math13\\Images\\rocket.png");
-            cometImage = Image.FromFile("C:\\_coding\\progmath\\math13\\Images\\comet.png");
-            goldCometImage = Image.FromFile("C:\\_coding\\progmath\\math13\\Images\\gold_comet.png");
-            explosionImage = Image.FromFile("C:\\_coding\\progmath\\math13\\Images\\explosion.gif");
+            spaceshipImage = Image.FromFile("C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Images\\spaceship.png");
+            rocketImage = Image.FromFile("C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Images\\rocket.png");
+            cometImage = Image.FromFile("C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Images\\comet.png");
+            goldCometImage = Image.FromFile("C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Images\\gold_comet.png");
+            explosionImage = Image.FromFile("C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Images\\explosion.gif");
             LoadExplosionFrames(explosionImage);
 
-            backgroundImage = Image.FromFile("C:\\_coding\\progmath\\math13\\Images\\background.png");
+            rocketBoostImage = Image.FromFile("C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Images\\rocket_boost.png");
+            explosionBoostImage = Image.FromFile("C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Images\\explosion_boost.png");
 
-            rocketBoostImage = Image.FromFile("C:\\_coding\\progmath\\math13\\Images\\rocket_boost.png");
-            explosionBoostImage = Image.FromFile("C:\\_coding\\progmath\\math13\\Images\\explosion_boost.png");
-
-            soundtrackSoundPath = "C:\\_coding\\progmath\\math13\\Sounds\\soundtrack.mp3";
-            explosionSoundPath = "C:\\_coding\\progmath\\math13\\Sounds\\explosion.mp3";
-            spaceshipExplosionSoundPath = "C:\\_coding\\progmath\\math13\\Sounds\\spaceship_explosion.mp3";
-            shootSoundPath = "C:\\_coding\\progmath\\math13\\Sounds\\fire.mp3";
-            itemSoundPath = "C:\\_coding\\progmath\\math13\\Sounds\\item.mp3";
+            soundtrackSoundPath = "C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Sounds\\soundtrack.mp3";
+            explosionSoundPath = "C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Sounds\\explosion.mp3";
+            spaceshipExplosionSoundPath = "C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Sounds\\spaceship_explosion.mp3";
+            shootSoundPath = "C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Sounds\\fire.mp3";
+            itemSoundPath = "C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Sounds\\item.mp3";
 
             //InitializeComponent();
             InitGame();
@@ -162,9 +157,11 @@ namespace math13
 
         private void InitGame()
         {
-            this.Width = 800;
-            this.Height = 600;
+            this.Width = 900;
+            this.Height = 1400;
             this.DoubleBuffered = true;
+            BackgroundImage = Image.FromFile("C:\\Users\\Livmas\\OneDrive\\Рабочий стол\\docs\\study\\course3\\math\\math13\\Images\\background.png");
+            BackgroundImageLayout = ImageLayout.Stretch;
 
             spaceship = new Spaceship(ClientSize.Width / 2 - 25, ClientSize.Height - 60);
 
@@ -211,13 +208,6 @@ namespace math13
 
             }
 
-            backgroundOffset += BackgroundSpeed;
-
-            // Если фон полностью прокручивается, сбрасываем смещение
-            if (backgroundOffset >= backgroundImage.Height)
-            {
-                backgroundOffset = 0;
-            }
 
             // Обновление положения объектов
             spaceship.Move(ClientSize);
@@ -285,7 +275,7 @@ namespace math13
                 if (spaceship.Bounds.IntersectsWith(comet.Bounds) && !gameOver)
                 {
                     gameOver = true;
-                    deathTimer = 130;
+                    deathTimer = 65;
                     spaceship.Direction = new Point(spaceship.Direction.X / 3, spaceship.Direction.Y / 3);
                     explosions.Add(new Explosion(new Rectangle(spaceship.X, spaceship.Y, 50, 50), new AnimatedGif(explosionFrames, explosionDelays)));
                     soundPlayer.Play(explosionSoundPath);
@@ -315,15 +305,14 @@ namespace math13
             {
                 if (deathTimer > 65)
                 {
-                    deathTimer--;
-                    if (deathTimer % 4 == 0)
+                    if (deathExplosionStarted == false)
                     {
                         explosions.Add(new Explosion(new Rectangle(spaceship.X, spaceship.Y, 50, 50), new AnimatedGif(explosionFrames, explosionDelays)));
+                        deathExplosionStarted = true;
                     }
                 }
                 else if (deathTimer > 1) {
                     deathTimer--;
-                    
                 }
                 else
                 {
@@ -331,20 +320,7 @@ namespace math13
                     gameTimer.Stop();
                     MessageBox.Show($"Игра окончена! Ваш счет: {score}");
                 }
-
-                if (deathTimer == 85)
-                {
-                    soundPlayer.Play(spaceshipExplosionSoundPath);
-                }
-
-                if (deathTimer == 65)
-                {
-                    spaceship.Direction = new Point(0, 0);
-                    explosions.Add(new Explosion(new Rectangle(spaceship.X - 50, spaceship.Y - 50, 150, 150), new AnimatedGif(explosionFrames, explosionDelays)));
-                }
-
             }
-
             Invalidate(); // Перерисовка
         }
 
@@ -412,12 +388,8 @@ namespace math13
         {
             Graphics g = e.Graphics;
 
-            g.DrawImage(backgroundImage, new Rectangle(0, backgroundOffset, ClientSize.Width, backgroundImage.Height));
-            g.DrawImage(backgroundImage, new Rectangle(0, backgroundOffset - backgroundImage.Height, ClientSize.Width, backgroundImage.Height));
-
-
             // Отрисовка звездолета
-            if (deathTimer == 0 || deathTimer > 50)
+            if (deathTimer == 0)
             {
                 spaceship.Draw(g, spaceshipImage);
             }
