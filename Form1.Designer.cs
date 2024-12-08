@@ -1,4 +1,4 @@
-﻿namespace StarWars
+﻿namespace math13
 {
     partial class Form1
     {
